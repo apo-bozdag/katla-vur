@@ -1198,6 +1198,7 @@ function syncMenu(){
   document.querySelectorAll('.seg').forEach(seg=>{const key=seg.dataset.key;
     seg.querySelectorAll('button').forEach(b=>{const v=b.dataset.val;const on=key==='mode'?cfg.mode===v:key==='level'?cfg.level===v:(cfg[key]?'1':'0')===v;b.setAttribute('aria-pressed',on);});});
   const ai=cfg.mode==='ai',on=cfg.mode==='online';$('#lvlSeg').style.visibility=ai?'visible':'hidden';$('#lvlLbl').style.visibility=ai?'visible':'hidden';
+  $('#lvlSeg').style.display=$('#lvlLbl').style.display=on?'none':'';
   ['#hidLbl','#hidSeg','#namesLbl','#namesBox'].forEach(id=>{$(id).style.display=on?'none':'';});
   const st=$('#btnStart'),note=$('#onlineNote');
   if(on){st.textContent=account.user?tr('createRoom'):account.standalone?tr('createRoom'):tr('signIn');st.disabled=account.standalone;
