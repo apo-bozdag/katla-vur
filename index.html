@@ -103,6 +103,7 @@ body.booting #app,body.booting .overlay{visibility:hidden}
 .btn:focus-visible{outline:3px dashed #fff;outline-offset:4px}
 .btn.icon{padding:0;width:2.5em;height:2.5em;display:grid;place-items:center;border-radius:50% 46% 52% 44%/48% 54% 46% 52%}
 .btn.icon svg{width:1.2em;height:1.2em}
+.btn[hidden]{display:none}
 .kbd{font-size:.7em;opacity:.8;font-weight:600}
 
 /* overlays */
@@ -145,19 +146,27 @@ body.booting #app,body.booting .overlay{visibility:hidden}
 #fx{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:40}
 
 @media (max-width:640px){
-  .bar{grid-template-columns:1fr 1fr;padding-top:12px;gap:8px 10px}
-  .center{grid-column:1 / -1;grid-row:2}
-  .pcard{padding:7px 10px 7px 8px;gap:8px}
-  .pcard>svg:first-child{width:20px;height:30px}
-  .pcard .name{font-size:16px;max-width:9ch}
-  .pcard .icons{gap:3px}
-  .pcard .icons svg{transform:scale(.8);transform-origin:bottom left}
-  .pcard .turn{font-size:12px}
-  #status{font-size:17px}
-  .controls{gap:8px;padding:4px 10px 12px}
-  .group{gap:8px}
-  .btn{font-size:15px}
-  .btn.primary{font-size:17px}
+  .bar{grid-template-columns:1fr 1fr;padding:10px 10px 0;gap:4px 8px}
+  .center{grid-column:1 / -1;grid-row:2;display:flex;justify-content:center;align-items:baseline;gap:8px}
+  .pcard{padding:5px 8px 5px 8px;gap:6px;box-shadow:0 4px 10px rgba(0,0,0,.25)}
+  .pcard::before{width:44px;height:12px;top:-6px}
+  .pcard.active{transform:rotate(0deg) scale(1.03)}
+  .pcard>svg:first-child,.pcard .turn{display:none}
+  .pcard>div{display:flex;align-items:center;gap:6px;min-width:0}
+  .pcard .name{font-size:14px;max-width:8ch}
+  .pcard .icons{gap:1px;margin-top:0}
+  .pcard .icons svg{width:11px;height:17px}
+  .pcard .icons span svg{width:18px;height:17px}
+  .pcard .icons span{margin-left:2px!important;gap:2px!important}
+  .pcard .icons i{width:5px!important;height:5px!important}
+  #round{font-size:14px}
+  #status{font-size:15px;min-height:0}
+  .controls{gap:6px;padding:4px 8px 10px;flex-wrap:nowrap}
+  .group{gap:6px;flex-wrap:nowrap}
+  .controls .btn{font-size:14px;padding:.5em .8em;border-width:2.5px;white-space:nowrap}
+  .controls .btn.primary{font-size:15px;padding:.5em 1em}
+  .controls .btn.icon{padding:0;width:2.3em;height:2.3em}
+  .controls .kbd{display:none}
   .opts{gap:10px 12px}
 }
 @media (max-height:520px){
@@ -303,7 +312,7 @@ const STR={
     r5:'Önce tüm adamları ve evi giden kaybeder.',
     mode:'Mod',vsAi:'Bilgisayara karşı',pvp:'İki kişi',cpu:'Bilgisayar',easy:'Kolay',normal:'Orta',hard:'Zor',
     tremor:'El titremesi',on:'Açık',off:'Kapalı',hidden:'Gizli dizilim',assist:'Nişan yardımı',names:'İsimler',
-    start:'Oyunu başlat',resume:'Devam et',hint:'Kısayollar: Boşluk katla, R rastgele diz, F tam ekran, M ses.',
+    start:'Oyunu başlat',resume:'Devam et',hint:'Kısayollar: Boşluk katla, R rastgele diz, M ses.',
     random:'Rastgele diz',clear:'Temizle',ready:'Hazır',fold:'Katla ve bas',space:'Boşluk',
     again:'Tekrar oyna',toMenu:'Ana menü',imReady:'Hazırım',
     sound:'Ses (M)',soundAria:'Sesi aç veya kapat',full:'Tam ekran (F)',menu:'Menü',leftHalf:'Sol yarı',rightHalf:'Sağ yarı',topHalf:'Üst yarı',bottomHalf:'Alt yarı',
@@ -331,7 +340,7 @@ const STR={
     r5:'Whoever loses all figures and the house first loses.',
     mode:'Mode',vsAi:'Vs computer',pvp:'Two players',cpu:'Computer',easy:'Easy',normal:'Medium',hard:'Hard',
     tremor:'Shaky hand',on:'On',off:'Off',hidden:'Hidden setup',assist:'Aim assist',names:'Names',
-    start:'Start game',resume:'Resume',hint:'Shortcuts: Space folds, R shuffles, F fullscreen, M sound.',
+    start:'Start game',resume:'Resume',hint:'Shortcuts: Space folds, R shuffles, M sound.',
     random:'Shuffle',clear:'Clear',ready:'Ready',fold:'Fold & press',space:'Space',
     again:'Play again',toMenu:'Main menu',imReady:'I’m ready',
     sound:'Sound (M)',soundAria:'Toggle sound',full:'Fullscreen (F)',menu:'Menu',leftHalf:'Left half',rightHalf:'Right half',topHalf:'Top half',bottomHalf:'Bottom half',
@@ -966,7 +975,8 @@ const toggleFull=()=>{const d=document.documentElement;
   if(!fsEl()){const f=d.requestFullscreen||d.webkitRequestFullscreen;if(f){const r=f.call(d);if(r&&r.catch)r.catch(()=>{});}}
   else{const x=document.exitFullscreen||document.webkitExitFullscreen;if(x)x.call(document);}};
 $('#btnFull').onclick=toggleFull;
-if(!(document.fullscreenEnabled||document.webkitFullscreenEnabled))$('#btnFull').hidden=true;
+const embedded=window.parent!==window;   // inside parolla the portal's own fullscreen button is the one to use
+if(embedded||!(document.fullscreenEnabled||document.webkitFullscreenEnabled))$('#btnFull').hidden=true;
 document.addEventListener('fullscreenchange',()=>setTimeout(resize,60));
 
 document.querySelectorAll('.seg').forEach(seg=>{
@@ -987,7 +997,7 @@ document.addEventListener('keydown',e=>{
   if(e.target.tagName==='INPUT')return;
   if(e.metaKey||e.ctrlKey||e.altKey)return;
   const k=e.key.toLowerCase();
-  if(k==='f'){toggleFull();return;}
+  if(k==='f'){if(!$('#btnFull').hidden)toggleFull();return;}
   if(k==='m'){$('#btnSound').click();return;}
   if(!S||S.overlay)return;
   if(e.code==='Space'||k==='enter'){if(document.activeElement&&document.activeElement.tagName==='BUTTON'&&k==='enter')return;e.preventDefault();snd.init();
