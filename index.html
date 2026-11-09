@@ -137,6 +137,12 @@ body.booting #app,body.booting .overlay{visibility:hidden}
 .hint{font-size:13px;color:var(--ink-soft);margin-top:1.2em}
 .acct{margin:1.4em 0 0;padding-top:1em;border-top:2px dashed rgba(0,0,0,.15);display:flex;flex-wrap:wrap;gap:10px 16px;align-items:center;font-size:clamp(14px,1.4vw,17px);color:var(--ink-soft)}
 .acct[hidden]{display:none}
+.onote{margin:.9em 0 0;font-weight:600;color:var(--p0);font-size:clamp(14px,1.4vw,17px)}
+.onote[hidden]{display:none}
+.invite{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 1.3em}
+.invite[hidden]{display:none}
+.invite input{flex:1 1 220px;min-width:0;font:600 15px var(--hand);color:var(--ink);padding:.55em .7em;border:2.5px solid var(--ink);border-radius:10px 4px 10px 4px;background:#fff;-webkit-user-select:all;user-select:all}
+.invite .btn{font-size:15px;padding:.45em 1em}
 .acct .rec{font-weight:600;color:var(--ink)}
 .acct .btn{font-size:clamp(14px,1.3vw,17px);padding:.4em 1em}
 .big{font-family:var(--brush);font-size:clamp(50px,9vw,120px);line-height:.9;margin:0 0 .2em;color:var(--c)}
@@ -241,17 +247,17 @@ body.booting #app,body.booting .overlay{visibility:hidden}
     </ol>
     <div class="opts">
       <div class="lbl" data-i18n="mode"></div>
-      <div class="seg" data-key="mode"><button data-val="ai" data-i18n="vsAi"></button><button data-val="pvp" data-i18n="pvp"></button></div>
+      <div class="seg" data-key="mode"><button data-val="ai" data-i18n="vsAi"></button><button data-val="pvp" data-i18n="pvp"></button><button data-val="online" data-i18n="online"></button></div>
       <div class="lbl" id="lvlLbl" data-i18n="cpu"></div>
       <div class="seg" data-key="level" id="lvlSeg"><button data-val="easy" data-i18n="easy"></button><button data-val="normal" data-i18n="normal"></button><button data-val="hard" data-i18n="hard"></button></div>
       <div class="lbl" data-i18n="tremor"></div>
       <div class="seg" data-key="tremor"><button data-val="1" data-i18n="on"></button><button data-val="0" data-i18n="off"></button></div>
-      <div class="lbl" data-i18n="hidden"></div>
-      <div class="seg" data-key="hidden"><button data-val="0" data-i18n="off"></button><button data-val="1" data-i18n="on"></button></div>
+      <div class="lbl" id="hidLbl" data-i18n="hidden"></div>
+      <div class="seg" data-key="hidden" id="hidSeg"><button data-val="0" data-i18n="off"></button><button data-val="1" data-i18n="on"></button></div>
       <div class="lbl" data-i18n="assist"></div>
       <div class="seg" data-key="assist"><button data-val="0" data-i18n="off"></button><button data-val="1" data-i18n="on"></button></div>
-      <div class="lbl" data-i18n="names"></div>
-      <div class="names">
+      <div class="lbl" id="namesLbl" data-i18n="names"></div>
+      <div class="names" id="namesBox">
         <label style="--c:var(--p0)"><span class="dotc"></span><input id="n0" maxlength="14" autocomplete="off" spellcheck="false"></label>
         <label style="--c:var(--p1)"><span class="dotc"></span><input id="n1" maxlength="14" autocomplete="off" spellcheck="false"></label>
       </div>
@@ -260,11 +266,28 @@ body.booting #app,body.booting .overlay{visibility:hidden}
       <button class="btn primary" id="btnStart" style="--pc:var(--p0)" data-i18n="start"></button>
       <button class="btn" id="btnResume" hidden data-i18n="resume"></button>
     </div>
+    <p class="onote" id="onlineNote" hidden></p>
     <p class="hint" data-i18n="hint"></p>
     <div class="acct" id="acct" hidden>
       <span id="acctText"></span>
       <span class="rec" id="acctRec"></span>
       <button class="btn" id="btnLogin" hidden data-i18n="login"></button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="lobby" hidden>
+  <div class="sheet" style="max-width:600px">
+    <p class="big" id="lbTitle" style="--c:var(--p1)"></p>
+    <p class="tag" id="lbText"></p>
+    <div class="invite" id="lbInvite" hidden>
+      <input id="lbLink" readonly aria-label="Davet">
+      <button class="btn" id="btnCopy" data-i18n="copy"></button>
+      <button class="btn" id="btnShare" hidden data-i18n="share"></button>
+    </div>
+    <div class="actions">
+      <button class="btn primary" id="btnLbLogin" hidden data-i18n="signIn" style="--pc:var(--p1)"></button>
+      <button class="btn" id="btnLbCancel"></button>
     </div>
   </div>
 </div>
@@ -328,7 +351,15 @@ const STR={
     wins:n=>`${n} kazandı`,draw:'Berabere',shots:'Atış',hits:'İsabet',acc:'İsabet oranı',selfHits:'Kendini vurma',rounds:'Tur',
     login:'İlerlemeni kaydetmek için giriş yap',hello:n=>`Merhaba ${n}, ilerlemen hesabına kaydediliyor.`,
     guest:'Misafir olarak oynuyorsun, ilerlemen bu cihazda duruyor.',local:'İlerlemen bu cihazda duruyor.',
-    record:(e,n,h)=>`Galibiyetler: Kolay ${e} · Orta ${n} · Zor ${h}`
+    record:(e,n,h)=>`Galibiyetler: Kolay ${e} · Orta ${n} · Zor ${h}`,recOnline:(w,g)=>` · Online ${w}/${g}`,
+    online:'Arkadaşınla online',createRoom:'Oda kur',signIn:'Giriş yap',
+    onlineNeedLogin:'Online oynamak için parolla hesabınla giriş yap.',onlineOnlyPortal:'Online oyun sadece parolla üzerinde çalışır.',
+    lbWaitTitle:'Oda hazır',lbWaitText:'Bağlantıyı arkadaşına gönder. O katılınca oyun başlar.',lbConnecting:'Bağlanılıyor...',lbJoining:'Odaya katılıyorsun...',
+    copy:'Bağlantıyı kopyala',copied:'Kopyalandı',share:'Paylaş',cancel:'Vazgeç',shareText:'Katla Vur oynayalım mı?',
+    invitedTitle:'Davet var',invitedLogin:'Arkadaşın seni bir odaya davet etti. Katılmak için parolla hesabınla giriş yap.',
+    waitOpp:n=>`${n} dizilimini yapıyor...`,oppAway:n=>`${n} bağlantısı koptu, bekleniyor...`,reconnecting:'Bağlantı koptu, yeniden bağlanılıyor...',
+    oppLeft:n=>`${n} oyundan ayrıldı.`,oops:'Olmadı',errFull:'Bu oda dolu.',errGone:'Bu oda artık yok. Yeni bir oda kurabilirsin.',
+    errAuth:'Giriş doğrulanamadı. Sayfayı yenileyip tekrar dene.',errNet:'Oyun sunucusuna bağlanılamadı. Biraz sonra tekrar dene.',rematchWait:'Rakip bekleniyor...'
   },
   en:{
     t1:'Katla',t2:'Vur',
@@ -356,7 +387,15 @@ const STR={
     wins:n=>`${n} wins`,draw:'Draw',shots:'Shots',hits:'Hits',acc:'Accuracy',selfHits:'Self hits',rounds:'Rounds',
     login:'Sign in to save your progress',hello:n=>`Hi ${n}, your progress is saved to your account.`,
     guest:'You’re playing as a guest, progress stays on this device.',local:'Your progress stays on this device.',
-    record:(e,n,h)=>`Wins: Easy ${e} · Medium ${n} · Hard ${h}`
+    record:(e,n,h)=>`Wins: Easy ${e} · Medium ${n} · Hard ${h}`,recOnline:(w,g)=>` · Online ${w}/${g}`,
+    online:'Online with a friend',createRoom:'Create room',signIn:'Sign in',
+    onlineNeedLogin:'Sign in with your parolla account to play online.',onlineOnlyPortal:'Online play only works on parolla.',
+    lbWaitTitle:'Room ready',lbWaitText:'Send the link to your friend. The game starts when they join.',lbConnecting:'Connecting...',lbJoining:'Joining the room...',
+    copy:'Copy link',copied:'Copied',share:'Share',cancel:'Cancel',shareText:'Up for a game of Katla Vur?',
+    invitedTitle:'You\u2019re invited',invitedLogin:'A friend invited you to a room. Sign in with your parolla account to join.',
+    waitOpp:n=>`${n} is setting up...`,oppAway:n=>`${n} disconnected, waiting...`,reconnecting:'Connection lost, reconnecting...',
+    oppLeft:n=>`${n} left the game.`,oops:'Oops',errFull:'This room is full.',errGone:'This room no longer exists. You can create a new one.',
+    errAuth:'Could not verify your sign-in. Reload and try again.',errNet:'Could not reach the game server. Try again in a bit.',rematchWait:'Waiting for opponent...'
   }
 };
 let LANG='tr';
@@ -619,7 +658,7 @@ function drawDecor(c,i,u,letter){
 
 /* ---------------- visibility & aim ---------------- */
 function viewer(){if(cfg.mode==='ai')return 0;return S.phase==='setup'?S.setupIdx:S.turn;}
-function visible(owner,p){return !cfg.hidden||S.phase==='over'||p.revealed||owner===viewer();}
+function visible(owner,p){if(S.online&&owner===1)return p.d!=null;return !cfg.hidden||S.phase==='over'||p.revealed||owner===viewer();}
 function canAim(i){return S&&S.phase==='aim'&&i===S.turn&&!S.players[i].isAI&&!S.overlay;}
 function aimPos(t){
   const hv=S.hover;let d=hv.d,y=hv.y;
@@ -698,6 +737,11 @@ function statusText(t){
   if(!S)return '';
   if(flashMsg&&t<flashUntil)return flashMsg;
   const P=S.players;
+  if(S.online){
+    if(NET.lost)return tr('reconnecting');
+    if(S.phase!=='over'&&S.oppConnected===false)return tr('oppAway',P[1].name);
+    if(S.phase==='setup'&&S.sent)return tr('waitOpp',P[1].name);
+  }
   if(S.phase==='setup'){const pl=P[S.setupIdx],ty=nextType(pl);
     if(ty==='house')return tr('placeHouse',pl.name);
     if(ty==='fig')return tr('placeFig',pl.name,figCount(pl)+1);
@@ -727,7 +771,7 @@ function updateUI(){
   if(!S){$('#round').textContent='';$('#gSetup').hidden=true;$('#gAim').hidden=true;return;}
   $('#round').textContent=S.phase==='setup'?tr('setup'):tr('round',S.round);
   const human=S.phase==='setup'?!S.players[S.setupIdx].isAI:!S.players[S.turn].isAI;
-  $('#gSetup').hidden=!(S.phase==='setup'&&human);
+  $('#gSetup').hidden=!(S.phase==='setup'&&human&&!S.sent);
   $('#gAim').hidden=!(S.phase==='aim'||S.phase==='folding');
   const col=S.players[S.phase==='setup'?S.setupIdx:S.turn].color;
   document.querySelectorAll('.controls .primary').forEach(b=>b.style.setProperty('--pc',col));
@@ -744,7 +788,7 @@ function syncGameplay(){
 }
 
 /* ---------------- progress: localStorage for everyone, parolla cloud when signed in ---------------- */
-const STAT_KEYS=['g_easy','w_easy','g_normal','w_normal','g_hard','w_hard','g_pvp','shots','hits'];
+const STAT_KEYS=['g_easy','w_easy','g_normal','w_normal','g_hard','w_hard','g_pvp','g_online','w_online','shots','hits'];
 const CLOUD_KEY='progress';
 const LS_GUEST='katlavur.progress.guest';
 let account={user:null,standalone:true};
@@ -775,7 +819,7 @@ function settingsSnapshot(){
 }
 function applySettings(s){
   if(!s||typeof s!=='object')return;
-  if(s.mode==='ai'||s.mode==='pvp')cfg.mode=s.mode;
+  if(s.mode==='ai'||s.mode==='pvp'||s.mode==='online')cfg.mode=s.mode;
   if(['easy','normal','hard'].includes(s.level))cfg.level=s.level;
   for(const k of ['tremor','hidden','assist'])if(typeof s[k]==='boolean')cfg[k]=s[k];
   if(Array.isArray(s.names))cfg.names=[0,1].map(i=>typeof s.names[i]==='string'?s.names[i].slice(0,14):'');
@@ -783,7 +827,8 @@ function applySettings(s){
 function persistSettings(){progress.settings=settingsSnapshot();saveProgress();}
 function recordGame(w){
   const st=progress.stats,P=S.players,inc=k=>{st[k]=(+st[k]||0)+1;};
-  if(cfg.mode==='ai'){inc('g_'+cfg.level);if(w===0)inc('w_'+cfg.level);st.shots=(+st.shots||0)+P[0].shots;st.hits=(+st.hits||0)+P[0].hits;}
+  if(S.online){inc('g_online');if(w===0)inc('w_online');st.shots=(+st.shots||0)+P[0].shots;st.hits=(+st.hits||0)+P[0].hits;}
+  else if(cfg.mode==='ai'){inc('g_'+cfg.level);if(w===0)inc('w_'+cfg.level);st.shots=(+st.shots||0)+P[0].shots;st.hits=(+st.hits||0)+P[0].hits;}
   else{inc('g_pvp');st.shots=(+st.shots||0)+P[0].shots+P[1].shots;st.hits=(+st.hits||0)+P[0].hits+P[1].hits;}
   saveProgress();renderAccount();
 }
@@ -808,7 +853,7 @@ function renderAccount(){
   const box=$('#acct'),st=progress.stats;
   const any=STAT_KEYS.some(k=>+st[k]>0);
   const wl=lv=>`${+st['w_'+lv]||0}/${+st['g_'+lv]||0}`;
-  $('#acctRec').textContent=any?tr('record',wl('easy'),wl('normal'),wl('hard')):'';
+  $('#acctRec').textContent=any?tr('record',wl('easy'),wl('normal'),wl('hard'))+(+st.g_online?tr('recOnline',+st.w_online||0,+st.g_online):''):'';
   let txt='';
   if(account.user)txt=tr('hello',account.user.name||'');
   else if(!account.standalone)txt=tr('guest');
@@ -834,6 +879,8 @@ function showHandoff(i,text){S.overlay='handoff';const pl=S.players[i];const n=$
   $('#hoText').textContent=text||tr('noLook');$('#btnHo').style.setProperty('--pc',pl.color);$('#handoff').hidden=false;$('#btnHo').focus({preventScroll:true});}
 function ready(){
   if(!S||S.phase!=='setup'||S.overlay)return;const pl=S.players[S.setupIdx];if(nextType(pl)){flash(tr('needAll'));return;}
+  if(S.online){if(S.sent)return;S.sent=true;
+    netSend({t:'layout',vert:S.vert,pieces:pl.pieces.map(p=>({type:p.type,d:p.d,y:p.y,pose:p.pose,seed:p.seed}))});updateUI();snd.rustle(.3);return;}
   if(cfg.mode==='pvp'&&S.setupIdx===0){S.setupIdx=1;updateUI();snd.rustle(.3);if(cfg.hidden)showHandoff(1,tr('setupNoLook'));return;}
   S.phase='aim';S.turn=0;S.pending=null;updateUI();snd.rustle(.4);
   if(cfg.mode==='pvp'&&cfg.hidden)showHandoff(0);
@@ -844,8 +891,19 @@ function nextTurn(){
 }
 async function foldAndPress(){
   if(!S||S.phase!=='aim'||!S.pending||S.overlay)return;
-  const G=S,me=S.turn,op=1-me,P=S.players,aim=S.pending;S.pending=null;S.hover=null;S.phase='folding';updateUI();
-  S.marks[me].push({d:aim.d,y:aim.y,kind:'dot',color:P[me].color,seed:aim.seed,t:now()-1000});P[me].shots++;
+  if(S.online){if(S.turn!==0||S.players[0].isAI)return;const aim=S.pending;S.phase='folding';S.hover=null;
+    netSend({t:'shot',d:aim.d,y:aim.y,seed:aim.seed});updateUI();return;}
+  const G=S,me=S.turn,op=1-me,aim=S.pending;S.pending=null;S.hover=null;S.phase='folding';updateUI();
+  S.players[me].shots++;
+  const tp={d:clamp(aim.d+gauss()*.006,.01,.99),y:clamp(aim.y+gauss()*.005,.01,.99)};
+  await foldAnim(me,aim,tp,aim.seed);
+  if(S!==G)return;   // a new game was started meanwhile
+  resolve(me,op,aim,tp);
+}
+// the paper animation for one shot: me's half folds onto op's half and the print is transferred
+async function foldAnim(me,aim,tp,seed){
+  const op=1-me,P=S.players;
+  S.marks[me].push({d:aim.d,y:aim.y,kind:'dot',color:P[me].color,seed,t:now()-1000});
   drawHalf(me,now());drawBack(me);
   const h=halves[me],T=RM?260:760,vert=S.vert,dir=me===0?1:-1,rot=vert?'rotateX':'rotateY';
   h.el.style.zIndex=5;
@@ -858,8 +916,7 @@ async function foldAndPress(){
   const press=$('#press'+op);
   if(!RM)await press.animate([{opacity:0,transform:'translateZ(40px) scale(1.4)'},{opacity:.6,transform:'translateZ(40px) scale(.92)'}],{duration:280,easing:'ease-in',fill:'forwards'}).finished;
   snd.thump();shake();dustPuff(op);
-  const tp={d:clamp(aim.d+gauss()*.006,.01,.99),y:clamp(aim.y+gauss()*.005,.01,.99)};
-  S.marks[op].push({d:tp.d,y:tp.y,kind:'transfer',color:P[me].color,seed:aim.seed,t:now()-1000});
+  S.marks[op].push({d:tp.d,y:tp.y,kind:'transfer',color:P[me].color,seed,t:now()-1000});
   await wait(RM?80:360);
   press.animate([{opacity:.6,transform:'translateZ(40px) scale(.92)'},{opacity:0,transform:'translateZ(40px) scale(1.2)'}],{duration:260,fill:'forwards'});
   snd.rustle(T*.9/1000);
@@ -867,8 +924,6 @@ async function foldAndPress(){
   const B=[h.el.animate([...kf].reverse(),opt2),h.shade.animate([...shK].reverse(),opt2),h.bshade.animate([...bsK].reverse(),opt2),halves[op].cast.animate([...caK].reverse(),opt2),$('#sb'+me).animate([...sbK].reverse(),opt2)];
   A.forEach(a=>a.cancel());
   await B[0].finished;B.forEach(b=>b.cancel());h.el.style.zIndex='';
-  if(S!==G)return;   // a new game was started meanwhile
-  resolve(me,op,aim,tp);
 }
 function damage(p,color,t){p.hp--;p.revealed=true;p.hitT=t;p.hitColor=color;if(p.hp<=0)p.alive=false;}
 function resolve(me,op,aim,tp){
@@ -876,14 +931,18 @@ function resolve(me,op,aim,tp){
   for(const p of P[op].pieces)if(p.alive&&hits(p,tp.d,tp.y)){damage(p,P[me].color,t);ev.push({self:false,p,i:op});}
   for(const p of P[me].pieces)if(p.alive&&hits(p,aim.d,aim.y)){damage(p,INK,t);ev.push({self:true,p,i:me});}
   P[me].hits+=ev.filter(e=>!e.self).length;P[me].self+=ev.filter(e=>e.self).length;
+  announce(me,op,tp,ev);
+  updateUI();
+  const lostOp=!P[op].pieces.some(p=>p.alive),lostMe=!P[me].pieces.some(p=>p.alive);
+  setTimeout(()=>{if(S!==G)return;if(lostOp||lostMe)gameOver(lostOp&&lostMe?-1:lostOp?me:op);else nextTurn();},ev.length?950+ev.length*280:620);
+}
+function announce(me,op,tp,ev){
+  const G=S,P=S.players;
   if(!ev.length){floater(op,tp.d,tp.y,tr('miss'),INK);snd.miss();}
   ev.forEach((e,k)=>setTimeout(()=>{if(S!==G)return;
     const txt=e.p.type==='fig'?(e.self?tr('selfFig'):tr('hit')):(e.p.alive?(e.self?tr('selfHouseDmg'):tr('houseCrack')):(e.self?tr('selfHouseKill'):tr('houseKill')));
     floater(e.i,e.p.d,e.p.y,txt,e.self?INK:P[me].color);e.self?snd.bad():snd.hit();burst(e.i,e.p.d,e.p.y,e.self?INK:P[me].color);
   },k*280));
-  updateUI();
-  const lostOp=!P[op].pieces.some(p=>p.alive),lostMe=!P[me].pieces.some(p=>p.alive);
-  setTimeout(()=>{if(S!==G)return;if(lostOp||lostMe)gameOver(lostOp&&lostMe?-1:lostOp?me:op);else nextTurn();},ev.length?950+ev.length*280:620);
 }
 function gameOver(w){
   const G=S;
@@ -931,6 +990,143 @@ async function aiTurn(){
   await wait(RM?150:520);await whilePaused(G);if(S!==G)return;foldAndPress();
 }
 
+/* ---------------- online rooms (identity = parolla token, moves relayed by our room server) ---------------- */
+const NET_URL=/^(localhost|127\.0\.0\.1)$/.test(location.hostname)?'ws://localhost:8787':'wss://katla-vur-rooms.abdullah5344.workers.dev';
+const NET={ws:null,room:null,mode:null,snap:null,q:Promise.resolve(),closing:false,retries:0,lost:false,link:'',linkRoom:null};
+const ROOM_CHARS='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+const newRoomCode=()=>Array.from(crypto.getRandomValues(new Uint8Array(6)),b=>ROOM_CHARS[b%ROOM_CHARS.length]).join('');
+const ssGet=k=>{try{return sessionStorage.getItem(k);}catch(e){return null;}};
+const ssSet=(k,v)=>{try{v==null?sessionStorage.removeItem(k):sessionStorage.setItem(k,v);}catch(e){}};
+function netOpen(room,mode){
+  netClose(false);
+  NET.room=room;NET.mode=mode;NET.closing=false;NET.retries=0;NET.lost=false;ssSet('kv.room',room);
+  netConnect();
+}
+async function netConnect(){
+  const room=NET.room;let token=null;
+  try{token=await sdk.getToken();}catch(e){}
+  if(NET.room!==room||NET.closing)return;
+  if(!token){netFail(tr('errAuth'));return;}
+  let ws;try{ws=new WebSocket(NET_URL+'/room/'+room);}catch(e){netFail(tr('errNet'));return;}
+  NET.ws=ws;
+  ws.onopen=()=>{ws.send(JSON.stringify({t:'auth',token,create:NET.mode==='create',join:NET.mode==='join'}));NET.mode='resume';};
+  ws.onmessage=e=>{let m;try{m=JSON.parse(e.data);}catch(_){return;}NET.q=NET.q.then(()=>netHandle(m)).catch(err=>console.error(err));};
+  ws.onclose=ev=>{
+    if(NET.ws!==ws)return;NET.ws=null;
+    if(NET.closing||ev.code>=4000)return;           // 4xxx: the server already told us why
+    if(NET.retries++<8){NET.lost=true;setTimeout(()=>{if(!NET.closing&&NET.room===room&&!NET.ws)netConnect();},Math.min(8000,700*NET.retries));}
+    else netFail(tr('errNet'));
+  };
+}
+function netSend(m){if(NET.ws&&NET.ws.readyState===1)NET.ws.send(JSON.stringify(m));}
+function netClose(leave){
+  NET.closing=true;if(leave)netSend({t:'leave'});
+  if(NET.ws)try{NET.ws.close(1000);}catch(e){}
+  NET.ws=null;NET.room=null;NET.snap=null;NET.lost=false;ssSet('kv.room',null);
+}
+function netFail(text){
+  netClose(false);
+  if(S&&S.online){S=null;updateUI();}
+  $('#over').hidden=true;
+  showLobby(tr('oops'),text,{cancel:tr('toMenu')});
+}
+function showLobby(title,text,o={}){
+  $('#lobby').hidden=false;$('#lbTitle').textContent=title;$('#lbText').textContent=text;$('#lbText').hidden=!text;
+  $('#lbInvite').hidden=!o.invite;$('#btnLbLogin').hidden=!o.login;$('#btnLbCancel').textContent=o.cancel||tr('cancel');
+}
+async function showLobbyWait(){
+  showLobby(tr('lbWaitTitle'),tr('lbWaitText'),{invite:true});
+  $('#btnCopy').textContent=tr('copy');
+  $('#btnShare').hidden=!navigator.share;
+  if(NET.linkRoom!==NET.room){
+    const room=NET.room;$('#lbLink').value='...';
+    let link='';try{link=await sdk.inviteLink({room});}catch(e){}
+    if(NET.room!==room)return;NET.link=link||room;NET.linkRoom=room;
+  }
+  $('#lbLink').value=NET.link;
+}
+$('#btnCopy').onclick=()=>{
+  const v=$('#lbLink').value,done=()=>{$('#btnCopy').textContent=tr('copied');};
+  const fallback=()=>{const i=$('#lbLink');i.focus();i.select();try{document.execCommand('copy');done();}catch(e){}};
+  if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(v).then(done,fallback);else fallback();
+};
+$('#btnShare').onclick=()=>{if(navigator.share)navigator.share({title:'Katla Vur',text:tr('shareText'),url:NET.link}).catch(()=>{});};
+$('#btnLbLogin').onclick=()=>safe(()=>sdk.requestLogin());
+$('#btnLbCancel').onclick=()=>{
+  if(NET.room)netClose(true);
+  ssSet('kv.invite',null);
+  $('#lobby').hidden=true;if(S&&S.online){S=null;updateUI();}openMenu();
+};
+async function netHandle(m){
+  if(m.t==='error'){
+    if(m.code==='room_taken'){netOpen(newRoomCode(),'create');return;}
+    if(m.code==='bad_layout'){if(S&&S.online){S.sent=false;updateUI();}flash(tr('noFit'));return;}
+    netFail({room_full:tr('errFull'),room_not_found:tr('errGone'),room_closed:tr('errGone'),auth_failed:tr('errAuth')}[m.code]||tr('errNet'));return;
+  }
+  if(m.t==='left'){
+    const name=S&&S.online?S.players[1].name:'';netClose(false);
+    if(S&&S.online){S.phase='over';updateUI();}
+    $('#over').hidden=true;showLobby(tr('gameOver'),tr('oppLeft',name),{cancel:tr('toMenu')});return;
+  }
+  if(m.t==='shot'){await playNetShot(m);return;}
+  if(m.t==='sync'){NET.snap=m;NET.lost=false;NET.retries=0;applySync(m);}
+}
+function applySync(m){
+  if(m.phase==='lobby'){if(!(S&&S.online))showLobbyWait();return;}
+  if(m.phase==='closed'){netFail(tr('errGone'));return;}
+  $('#lobby').hidden=true;ssSet('kv.invite',null);
+  if(!(S&&S.online&&S.gameId===m.game))buildOnlineGame(m);
+  updateOnlineGame(m);
+}
+function buildOnlineGame(m){
+  const you=m.you,op=1-you;
+  S={online:true,gameId:m.game,phase:'setup',turn:0,setupIdx:0,round:1,pending:null,hover:null,aiHover:null,overlay:null,marks:[[],[]],
+    vert:m.mine?!!m.myVert:wantVert(),sent:false,oppConnected:true,
+    players:[{name:m.players[you].name,color:COLORS[0],isAI:false,pieces:[],shots:0,hits:0,self:0},
+             {name:(m.players[op]||{}).name||'?',color:COLORS[1],isAI:true,remote:true,pieces:[],shots:0,hits:0,self:0}]};
+  $('#menu').hidden=true;$('#over').hidden=true;$('#handoff').hidden=true;
+  const b=$('#btnAgain');b.disabled=false;b.textContent=tr('again');
+  parts=[];$('#floaters').innerHTML='';
+  resize();halves.forEach((h,i)=>{drawHalf(i,now());drawBack(i);});snd.rustle(.5);
+}
+const keepFx=(old,list)=>list.map((p,k)=>({...p,hitT:old[k]&&old[k].hitT!=null?old[k].hitT:-1e9,hitColor:old[k]&&old[k].hitColor||INK}));
+function updateOnlineGame(m){
+  const you=m.you,op=1-you,t=now(),P=S.players,opp=m.players[op]||{};
+  P[0].name=m.players[you].name;P[1].name=opp.name||P[1].name;
+  S.oppConnected=!!opp.connected;S.round=m.round;
+  if(m.mine){S.sent=true;P[0].pieces=keepFx(P[0].pieces,m.mine);}
+  P[1].pieces=m.opp?keepFx(P[1].pieces,m.opp.map(p=>p.hidden?{...p,d:null,y:null,seed:1,pose:0,revealed:false}:p)):[];
+  S.marks=[m.marks[you],m.marks[op]].map((list,i)=>list.map((mk,k)=>({d:mk.d,y:mk.y,kind:mk.kind,seed:mk.seed,color:COLORS[mk.by===you?0:1],
+    t:S.marks[i][k]&&S.marks[i][k].t!=null?S.marks[i][k].t:t-1000})));
+  [you,op].forEach((seat,i)=>{const st=m.stats[seat];P[i].shots=st.shots;P[i].hits=st.hits;P[i].self=st.self;});
+  if(m.phase==='setup')S.phase='setup';
+  else if(m.phase==='play'){const turn=m.turn===you?0:1;if(S.phase!=='aim'||S.turn!==turn)S.pending=null;S.phase='aim';S.turn=turn;}
+  else if(m.phase==='over'&&S.phase!=='over')gameOver(m.winner<0?-1:m.winner===you?0:1);
+  updateUI();
+}
+async function playNetShot(m){
+  if(!(S&&S.online&&S.gameId===m.game&&NET.snap))return;
+  const G=S,you=NET.snap.you,me=m.by===you?0:1,op=1-me,P=S.players;
+  S.pending=null;S.hover=null;S.turn=me;S.phase='folding';updateUI();
+  await foldAnim(me,m.aim,m.tp,m.seed);
+  if(S!==G)return;
+  const t=now(),ev=[];
+  for(const h of m.hits){const li=h.seat===you?0:1;const p={...h.piece,hitT:t,hitColor:h.self?INK:P[me].color};P[li].pieces[h.idx]=p;ev.push({self:h.self,p,i:li});}
+  announce(me,op,m.tp,ev);updateUI();
+  await wait(ev.length?950+ev.length*280:620);
+}
+// a room from an invite link, or the room this tab was in before a reload (portal reloads the game after sign-in)
+function resumeOnline(info){
+  const inv=info&&info.invite&&typeof info.invite.room==='string'&&/^[A-Z0-9]{6}$/.test(info.invite.room)?info.invite.room:null;
+  const pendingInvite=inv||ssGet('kv.invite'),lastRoom=ssGet('kv.room');
+  if(!pendingInvite&&!lastRoom)return;
+  if(account.standalone){ssSet('kv.invite',null);ssSet('kv.room',null);return;}
+  if(!account.user){if(pendingInvite){ssSet('kv.invite',pendingInvite);$('#menu').hidden=true;showLobby(tr('invitedTitle'),tr('invitedLogin'),{login:true});}return;}
+  $('#menu').hidden=true;
+  if(pendingInvite&&pendingInvite!==lastRoom){showLobby(tr('lbJoining'),'');netOpen(pendingInvite,'join');}
+  else{showLobby(tr('lbConnecting'),'');netOpen(lastRoom||pendingInvite,'resume');}
+}
+
 /* ---------------- input ---------------- */
 halves.forEach((h,i)=>{
   const el=h.front;
@@ -943,7 +1139,7 @@ halves.forEach((h,i)=>{
   el.addEventListener('pointerleave',e=>{if(S&&e.pointerType!=='touch')S.hover=null;});
   el.addEventListener('pointerdown',e=>{
     snd.init();if(!S||S.overlay)return;S.hover=pos(e);cursor();const {d,y}=S.hover;
-    if(S.phase==='setup'){const pl=S.players[S.setupIdx];if(i!==S.setupIdx||pl.isAI){flash(tr('ownHalf'));return;}
+    if(S.phase==='setup'){if(S.online&&S.sent)return;const pl=S.players[S.setupIdx];if(i!==S.setupIdx||pl.isAI){flash(tr('ownHalf'));return;}
       const ex=pl.pieces.findIndex(p=>inside(p,d,y));if(ex>=0){pl.pieces.splice(ex,1);snd.miss();updateUI();return;}
       const type=nextType(pl);if(!type)return;if(!canPlace(pl,type,d,y)){snd.bad();flash(tr('noFit'));return;}
       pl.pieces.push(makePiece(type,d,y));snd.place();updateUI();return;}
@@ -953,14 +1149,24 @@ halves.forEach((h,i)=>{
 });
 $('#btnFold').onclick=()=>{snd.init();foldAndPress();};
 $('#btnReady').onclick=()=>{snd.init();ready();};
-$('#btnRandom').onclick=()=>{snd.init();if(S&&S.phase==='setup'&&!S.overlay){randomLayout(S.players[S.setupIdx]);snd.rustle(.25);updateUI();}};
-$('#btnClear').onclick=()=>{if(S&&S.phase==='setup'&&!S.overlay){S.players[S.setupIdx].pieces=[];updateUI();}};
+$('#btnRandom').onclick=()=>{snd.init();if(S&&S.phase==='setup'&&!S.overlay&&!S.sent){randomLayout(S.players[S.setupIdx]);snd.rustle(.25);updateUI();}};
+$('#btnClear').onclick=()=>{if(S&&S.phase==='setup'&&!S.overlay&&!S.sent){S.players[S.setupIdx].pieces=[];updateUI();}};
 $('#btnHo').onclick=()=>{snd.init();$('#handoff').hidden=true;if(S)S.overlay=null;};
-$('#btnAgain').onclick=()=>{snd.init();newGame();};
-$('#btnToMenu').onclick=()=>{$('#over').hidden=true;openMenu();};
+$('#btnAgain').onclick=()=>{snd.init();
+  if(S&&S.online){netSend({t:'rematch'});const b=$('#btnAgain');b.disabled=true;b.textContent=tr('rematchWait');return;}
+  newGame();};
+$('#btnToMenu').onclick=()=>{$('#over').hidden=true;if(S&&S.online){netClose(true);S=null;updateUI();}openMenu();};
 $('#btnMenu').onclick=()=>openMenu();
 $('#btnResume').onclick=()=>{$('#menu').hidden=true;if(S&&S.overlay==='menu')S.overlay=null;};
-$('#btnStart').onclick=()=>{snd.init();cfg.names=[$('#n0').value,$('#n1').value];persistSettings();newGame();};
+$('#btnStart').onclick=()=>{snd.init();cfg.names=[$('#n0').value,$('#n1').value];persistSettings();
+  if(cfg.mode==='online'){
+    if(account.standalone)return;
+    if(!account.user){safe(()=>sdk.requestLogin());return;}
+    if(NET.room)netClose(true);
+    S=null;updateUI();$('#menu').hidden=true;
+    showLobby(tr('lbConnecting'),'');netOpen(newRoomCode(),'create');return;}
+  if(NET.room)netClose(true);
+  newGame();};
 $('#btnLogin').onclick=()=>{persistSettings();safe(()=>sdk.requestLogin());};
 function openMenu(){
   $('#menu').hidden=false;const live=S&&S.phase!=='over';$('#btnResume').hidden=!live;if(live&&!S.overlay)S.overlay='menu';
@@ -991,7 +1197,12 @@ document.querySelectorAll('.seg').forEach(seg=>{
 function syncMenu(){
   document.querySelectorAll('.seg').forEach(seg=>{const key=seg.dataset.key;
     seg.querySelectorAll('button').forEach(b=>{const v=b.dataset.val;const on=key==='mode'?cfg.mode===v:key==='level'?cfg.level===v:(cfg[key]?'1':'0')===v;b.setAttribute('aria-pressed',on);});});
-  const ai=cfg.mode==='ai';$('#lvlSeg').style.visibility=ai?'visible':'hidden';$('#lvlLbl').style.visibility=ai?'visible':'hidden';
+  const ai=cfg.mode==='ai',on=cfg.mode==='online';$('#lvlSeg').style.visibility=ai?'visible':'hidden';$('#lvlLbl').style.visibility=ai?'visible':'hidden';
+  ['#hidLbl','#hidSeg','#namesLbl','#namesBox'].forEach(id=>{$(id).style.display=on?'none':'';});
+  const st=$('#btnStart'),note=$('#onlineNote');
+  if(on){st.textContent=account.user?tr('createRoom'):account.standalone?tr('createRoom'):tr('signIn');st.disabled=account.standalone;
+    note.textContent=account.standalone?tr('onlineOnlyPortal'):!account.user?tr('onlineNeedLogin'):'';note.hidden=!note.textContent;}
+  else{st.textContent=tr('start');st.disabled=false;note.hidden=true;}
 }
 document.addEventListener('keydown',e=>{
   if(e.target.tagName==='INPUT')return;
@@ -1005,6 +1216,7 @@ document.addEventListener('keydown',e=>{
   if(k==='r'&&S.phase==='setup')$('#btnRandom').click();
 });
 
+addEventListener('pagehide',()=>{if(NET.ws)try{NET.ws.close(1000);}catch(e){}});
 /* pause audio while hidden (portal tab switch, app background) */
 document.addEventListener('visibilitychange',()=>{
   if(snd.ctx){if(document.visibilityState==='hidden')snd.ctx.suspend().catch(()=>{});else if(snd.on)snd.ctx.resume().catch(()=>{});}
@@ -1042,6 +1254,7 @@ async function boot(){
   try{await loadAccount(info);}catch(e){}
   $('#n0').value=cfg.names[0]||defName(0,cfg.mode);$('#n1').value=cfg.names[1]||defName(1,cfg.mode);
   syncMenu();renderAccount();updateUI();
+  resumeOnline(info);
   document.body.classList.remove('booting');
   resize();
   if(document.fonts&&document.fonts.ready)document.fonts.ready.then(()=>{brushFont=null;halves.forEach(h=>{h.W=0;});resize();});
