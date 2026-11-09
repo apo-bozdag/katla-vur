@@ -1041,6 +1041,8 @@ async function showLobbyWait(){
   if(NET.linkRoom!==NET.room){
     const room=NET.room;$('#lbLink').value='...';
     let link='';try{link=await sdk.inviteLink({room});}catch(e){}
+    // parolla currently returns links like /tr/oyun/<slug>?davet=..., and the /tr/ (or /en/) prefix gives a 404 on the portal
+    try{const u=new URL(link);if(/(^|\.)parolla\.app$/.test(u.hostname)){u.pathname=u.pathname.replace(/^\/(tr|en)(?=\/)/,'');link=u.href;}}catch(e){}
     if(NET.room!==room)return;NET.link=link||room;NET.linkRoom=room;
   }
   $('#lbLink').value=NET.link;
